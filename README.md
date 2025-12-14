@@ -1,5 +1,7 @@
 # Chrome Dino Game (Canvas)
 
+https://11kazu13.github.io/chrome-dino-game/
+
 Google Chrome のオフライン時に遊べる「Chrome Dino Game」を参考に、  
 **HTML / JavaScript / Canvas API** を使って制作したシンプルな2Dゲームです。
 
