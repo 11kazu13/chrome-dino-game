@@ -22,6 +22,7 @@ imageNames.forEach(function(imageName){
   game.image[imageName].onload = function() {
     imageLoadCounter++;
     if(imageLoadCounter === imageNames.length){
+      console.log("画像の読み込みが完了しました");
       init();
     };
   };
@@ -40,17 +41,29 @@ function ticker(){
   // 画面をクリア
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // TODO 敵キャラクタの生成
+  // 敵キャラクタの生成
+  if (Math.floor(Math.random() * (100 - game.score / 100)) === 0) {
+    createCactus();
+  }
+
+  if (Math.floor(Math.random() * (200 - game.score / 100)) === 0) {
+    createBird();
+  }
 
   // キャラクタの移動
   moveDino();
+  moveEnemys(); // 敵キャラクタの移動
 
   // 描画
   drawDino();
+  drawEnemys(); // 敵キャラクタの描画
+  drawScore(); // スコアの描画
 
-  // TODO 当たり判定
+  // 当たり判定
+  hitCheck();
 
   // カウンタの更新
+  game.score += 1;
   game.counter = (game.counter + 1) % 1000000;
 }
 
@@ -65,14 +78,45 @@ function createDino(){
   }
 }
 
+function createCactus() {
+  game.enemys.push({
+    x: canvas.width + game.image.cactus.width / 2,
+    y: canvas.height - game.image.cactus.height / 2,
+    width: game.image.cactus.width,
+    height: game.image.cactus.height,
+    moveX: -10,
+    image: game.image.cactus
+  });
+}
+
+function createBird() {
+  const birdY = Math.random() * (300 - game.image.bird.height) + 150;
+  game.enemys.push({
+    x: canvas.width + game.image.bird.width / 2,
+    y: birdY,
+    width: game.image.bird.width,
+    height: game.image.bird.height,
+    moveX: -15,
+    image: game.image.bird
+  });
+}
+
 function moveDino(){
-  game.dino.y += game.dino.moveY;
-  if (game.dino.y >= canvas.height - game.dino.height / 2) {
+  game.dino.y += game.dino.moveY; // 恐竜の移動
+  if (game.dino.y >= canvas.height - game.dino.height / 2) { // のめり込まないようにする
     game.dino.y = canvas.height - game.dino.height / 2;
     game.dino.moveY = 0;
   } else {
     game.dino.moveY += 3; // 重力
   }
+}
+
+function moveEnemys(){
+  for (const enemy of game.enemys) {
+    enemy.x += enemy.moveX;
+  }
+    // 画面外に出た敵キャラクタを削除
+    game.enemys = game.enemys.filter(e => e.x > -e.width);
 }
 
 function drawDino(){
@@ -83,8 +127,36 @@ function drawDino(){
   );
 }
 
+function drawEnemys() {
+  for (const enemy of game.enemys) {
+    ctx.drawImage(enemy.image,
+      enemy.x - enemy.width / 2,
+      enemy.y - enemy.height / 2
+    );
+  }
+}
+
+function drawScore(){
+  ctx.font = "24px serif";
+  ctx.fillText(`Score: ${game.score}`, 0, 30);
+}
+
 document.onkeydown = (e) => {
   if (e.code === 'Space' && game.dino.moveY === 0) {
-    game.dino.moveY = -40;
+    game.dino.moveY = -41;
+  }
+  if (e.key === `Enter` && game.isGameOver === true) {
+    init();
   }
 };
+
+function hitCheck(){
+  for (const enemy of game.enemys) {
+    if (Math.abs(game.dino.x - enemy.x) < (game.dino.width * 0.8 / 2 + enemy.width * 0.9 / 2) && (Math.abs(game.dino.y - enemy.y) < (game.dino.height * 0.5 / 2 + enemy.height * 0.9 / 2))) {
+      game.isGameOver = true;
+      ctx.font = "bold 100px serif";
+      ctx.fillText("Game Over!", 100, 200);
+      clearInterval(game.timer);
+    }
+  }
+}
